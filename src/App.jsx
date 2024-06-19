@@ -1,18 +1,10 @@
 import { useState, useEffect } from "react";
 import "./App.css";
 import SingleCard from "./components/SingleCard";
+import { Button, Label, TextInput } from "flowbite-react";
 
 // import { useEffect, useState } from "react";
 import { useSocket } from "./hooks/useSocket";
-
-// const cardImages = [
-//   { src: "/img/helmet-1.png", matched: false },
-//   { src: "/img/potion-1.png", matched: false },
-//   { src: "/img/ring-1.png", matched: false },
-//   { src: "/img/scroll-1.png", matched: false },
-//   { src: "/img/shield-1.png", matched: false },
-//   { src: "/img/sword-1.png", matched: false },
-// ];
 
 export default function App() {
   const [cards, setCards] = useState([]);
@@ -20,18 +12,6 @@ export default function App() {
   const [choiceOne, setChoiceOne] = useState(null);
   const [choiceTwo, setChoiceTwo] = useState(null);
   const [disabled, setDisabled] = useState(false);
-  const [sendCard, setSendCard] = useState([])
-  // shuffle cards
-  // const shuffleCards = () => {
-  //   const shuffledCards = [...cardImages, ...cardImages]
-  //     .sort(() => Math.random() - 0.5)
-  //     .map((card) => ({ ...card, id: Math.random() }));
-
-  //   setChoiceOne(null);
-  //   setChoiceTwo(null);
-  //   setCards(shuffledCards);
-  //   setTurns(0);
-  // };
 
   // handle a choice
   const handleChoice = (card) => {
@@ -65,18 +45,19 @@ export default function App() {
   useEffect(() => {
     let count = 0;
 
-        cards.forEach((card) => {
-          console.log(card.matched, "truee");
-          if (card.matched === true) {
-            count++;
-          }
-        });
+    cards.forEach((card) => {
+      console.log(card.matched, "truee");
+      if (card.matched === true) {
+        count++;
+      }
+    });
 
-        console.log(count, "<<<< count");
+    console.log(count, "<<<< count");
 
-        if (cards.length === count) {
-          alert("success nice");
-        }
+    if (cards.length === count) {
+      // alert("success nice");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   //reset choices & increase turn
@@ -86,12 +67,6 @@ export default function App() {
     setTurns((prevTurns) => prevTurns + 1);
     setDisabled(false);
   };
-
-  // start a new game
-  // useEffect(() => {
-  //   shuffleCards();
-  // }, []);
-
 
 
   //socket ni boss
@@ -109,7 +84,7 @@ export default function App() {
     socket?.emit("Join-Room", "room_1")
 
     socket?.on("game-board-created", cards => {
-      console.log({cards});
+      console.log({ cards });
       setCards(cards)
       setTurns(0);
       setChoiceOne(null);
@@ -130,28 +105,30 @@ export default function App() {
     setSen("");
   };
 
-  let handleSendCards = () => {
-    const body = {
-      sender: localStorage.getItem("user"),
-      data: cards
-    }
-
-    socket.emit("cards:post", body);
-    setSendCard([]);
-  }
-
   const start = () => {
     socket.emit("generate-shuffled-card")
   }
+
   return (
     <>
-      <div className="App" style={{ display: "flex" }}>
+      <div className="App m-0 w-full px-20 py-5" style={{ display: "flex" }}>
         <div className="card-container me-20">
-          <h1>Card Game</h1>
+          <h3 className="text-2xl font-semibold">Memory Battle</h3>
+          <form className="flex max-w-md flex-col gap-4">
+            <div>
+              <div className="mb-2 block">
+                <Label htmlFor="name" value="Your name" />
+              </div>
+              <TextInput id="name" type="text" placeholder="" required />
+            </div>
+            <Button type="submit">Submit</Button>
+          </form>
+
+
           {/* <button onClick={shuffleCards}>Start Game</button> */}
           <button onClick={start}>Start Game</button>
 
-          <div className="card-grid" onClick={handleSendCards}>
+          <div className="card-grid">
             {cards.map((card) => (
               <SingleCard
                 key={card.id}
@@ -166,39 +143,60 @@ export default function App() {
         </div>
 
         <div className="chat-container">
-          {/* socket */}
-          <div>
-            <h1>Hello</h1>
-            {messages.map((m) => {
-              if (m.sender === localStorage.getItem("user")) {
-                return (
-                  <div
-                    key={m.text + m.sender}
-                    className="d-flex justify-content-end"
-                  >
-                    <p>
-                      {m.text}:<strong>{m.sender}</strong>
-                    </p>
-                  </div>
-                );
-              }
+          {messages.map((m) => {
+            if (m.sender === localStorage.getItem("user")) {
               return (
-                <div key={m.text + m.sender}>
-                  <p>
-                    <strong>{m.sender}</strong>: {m.text}
-                  </p>
+                <div className="flex items-start gap-2.5 justify-end mb-2" key={m.text + m.sender}>
+                  <div className="flex flex-col max-w-[320px] leading-1.5 p-4 border-gray-200 bg-gray-100 rounded-s-xl rounded-e-xl dark:bg-gray-700">
+                    <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                      <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                        {m.sender}
+                      </span>
+                      <span className="text-sm font-normal text-gray-500 dark:text-gray-400">
+                        11:46
+                      </span>
+                    </div>
+                    <p className="text-sm font-normal py-2.5 text-gray-900 dark:text-white">
+                      {m.text}
+                    </p>
+                    <span className="text-sm font-normal text-gray-500 dark:text-gray-400">
+                      Delivered
+                    </span>
+                  </div>
                 </div>
               );
-            })}
-            <hr />
-            <input
-              value={sen}
-              onChange={(e) => {
-                setSen(e.target.value);
-              }}
-            />
-            <button onClick={tanganiKirimPesan}>Kirim</button>
-          </div>
+            }
+            return (
+              <>
+                <div className="flex items-start gap-2.5 mb-2" key={m.text + m.sender}>
+                  <div className="flex flex-col max-w-[320px] leading-1.5 p-4 border-gray-200 bg-gray-100 rounded-e-xl rounded-es-xl dark:bg-gray-700">
+                    <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                      <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                        {m.sender}
+                      </span>
+                      <span className="text-sm font-normal text-gray-500 dark:text-gray-400">
+                        11:46
+                      </span>
+                    </div>
+                    <p className="text-sm font-normal py-2.5 text-gray-900 dark:text-white">
+                      {m.text}
+                    </p>
+                    <span className="text-sm font-normal text-gray-500 dark:text-gray-400">
+                      Delivered
+                    </span>
+                  </div>
+                </div>
+              </>
+            );
+          })}
+          <hr />
+          <input
+            value={sen}
+            onChange={(e) => {
+              setSen(e.target.value);
+            }}
+          />
+          <button onClick={tanganiKirimPesan}>Kirim</button>
         </div>
       </div>
     </>
