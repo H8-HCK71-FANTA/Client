@@ -111,8 +111,8 @@ export default function App() {
 
   return (
     <>
-      <div className="App m-0 w-full px-20 py-5" style={{ display: "flex" }}>
-        <div className="card-container me-20">
+      <div className="App flex w-full px-20 py-5">
+        <div className="card-container w-3/4 me-10">
           <h3 className="text-2xl font-semibold">Memory Battle</h3>
           <form className="flex max-w-md flex-col gap-4">
             <div>
@@ -124,8 +124,6 @@ export default function App() {
             <Button type="submit">Submit</Button>
           </form>
 
-
-          {/* <button onClick={shuffleCards}>Start Game</button> */}
           <button onClick={start}>Start Game</button>
 
           <div className="card-grid">
@@ -142,61 +140,73 @@ export default function App() {
           <p>Turns: {turns}</p>
         </div>
 
-        <div className="chat-container">
-          {messages.map((m) => {
-            if (m.sender === localStorage.getItem("user")) {
-              return (
-                <div className="flex items-start gap-2.5 justify-end mb-2" key={m.text + m.sender}>
-                  <div className="flex flex-col max-w-[320px] leading-1.5 pt-3 pb-2 px-5 border-gray-200 light:bg-gray-100 rounded-s-xl rounded-ee-xl bg-pink-900">
-                    <div className="flex items-end space-x-2 rtl:space-x-reverse">
-                      <span className="text-sm font-semibold light:text-gray-900 text-white">
-                        {m.sender}
-                      </span>
-                      {/* <span className="text-sm font-normal light:text-gray-500 text-gray-400">
-                        11:46
-                      </span> */}
+        <div className="main-chat-container shadow-xl h-fit">
+          <div className="players-container bg-[#3a384c] p-3 rounded-ss-xl rounded-se-xl flex gap-3">
+            <div className="box bg-[#45425a] w-1/2 p-2 rounded-lg borde">
+              <p className="text-sm font-semibold">Player 1</p>
+              <p>0 point</p>
+            </div>
+            <div className="box bg-[#45425a] w-1/2 p-2 rounded-lg">
+              <p className="text-sm font-semibold">Player 2</p>
+              <p>0 point</p>
+            </div>
+          </div>
+          <div className="chat-container flex-col bg-[#282639] max-h-[400px]  overflow-auto">
+            <div className="chat-view p-5 overflow-auto">
+              <p className="text-gray-500 italic text-sm mb-5">your conversation starts here</p>
+              {messages.map((m) => {
+                if (m.sender === localStorage.getItem("user")) {
+                  return (
+                    <div className="flex items-start gap-2.5 justify-end mb-2" key={m.text + m.sender}>
+                      <div className="flex flex-col max-w-[250px] leading-1.5 pt-3 pb-2 px-3 border-gray-200 light:bg-gray-100 rounded-s-xl rounded-ee-xl bg-pink-900">
+                        <div className="flex items-end space-x-2 rtl:space-x-reverse">
+                          <span className="text-sm font-semibold light:text-gray-900 text-white">
+                            {m.sender}
+                          </span>
+                        </div>
+                        <p className="text-sm font-normal py-2.5 light:text-gray-900 text-white">
+                          {m.text}
+                        </p>
+                      </div>
                     </div>
-                    <p className="text-sm font-normal py-2.5 light:text-gray-900 text-white">
-                      {m.text}
-                    </p>
-                    {/* <span className="text-sm font-normal light:text-gray-500 text-gray-400">
-                      Delivered
-                    </span> */}
-                  </div>
-                </div>
-              );
-            }
-            return (
-              <>
-                <div className="flex items-start gap-2.5 mb-2" key={m.text + m.sender}>
-                  <div className="flex flex-col max-w-[320px] leading-1.5 pt-3 pb-2 px-5 border-gray-200 light:bg-gray-100 rounded-e-xl rounded-es-xl bg-gray-700">
-                    <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                      <span className="text-sm font-semibold light:text-gray-900 text-white">
-                        {m.sender}
-                      </span>
-                      {/* <span className="text-sm font-normal light:text-gray-500 text-gray-400">
-                        11:46
-                      </span> */}
+                  );
+                }
+                return (
+                  <>
+                    <div className="flex items-start gap-2.5 mb-2" key={m.text + m.sender}>
+                      <div className="flex flex-col max-w-[250px] leading-1.5 pt-3 pb-2 px-3 border-gray-200 light:bg-gray-100 rounded-e-xl rounded-es-xl bg-gray-700">
+                        <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                          <span className="text-sm font-semibold light:text-gray-900 text-white">
+                            {m.sender}
+                          </span>
+                        </div>
+                        <p className="text-sm font-normal py-2.5 light:text-gray-900 text-white">
+                          {m.text}
+                        </p>
+                      </div>
                     </div>
-                    <p className="text-sm font-normal py-2.5 light:text-gray-900 text-white">
-                      {m.text}
-                    </p>
-                    {/* <span className="text-sm font-normal light:text-gray-500 text-gray-400">
-                      Delivered
-                    </span> */}
-                  </div>
-                </div>
-              </>
-            );
-          })}
-          <hr />
-          <input
-            value={sen}
-            onChange={(e) => {
-              setSen(e.target.value);
-            }}
-          />
-          <button onClick={tanganiKirimPesan}>Kirim</button>
+                  </>
+                );
+              })}
+            </div>
+          </div>
+          <div className="input-chat bg-[#3a384c] p-3 h-fit rounded-es-xl rounded-ee-xl">
+            <form className="flex max-w-md gap-2">
+              <TextInput
+                id="chat"
+                type="text"
+                placeholder="type here.."
+                value={sen}
+                onChange={(e) => {
+                  setSen(e.target.value);
+                }}
+                className="w-full"
+              />
+              <div onClick={tanganiKirimPesan} className="p-3 py-1 rounded-lg flex items-center cursor-pointer bg-pink-700 hover:bg-pink-800">
+                <i className='bx bxs-paper-plane text-base'></i>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
     </>
