@@ -147,21 +147,21 @@ export default function App() {
             if (m.sender === localStorage.getItem("user")) {
               return (
                 <div className="flex items-start gap-2.5 justify-end mb-2" key={m.text + m.sender}>
-                  <div className="flex flex-col max-w-[320px] leading-1.5 p-4 border-gray-200 bg-gray-100 rounded-s-xl rounded-e-xl dark:bg-gray-700">
-                    <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                      <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                  <div className="flex flex-col max-w-[320px] leading-1.5 pt-3 pb-2 px-5 border-gray-200 light:bg-gray-100 rounded-s-xl rounded-ee-xl bg-pink-900">
+                    <div className="flex items-end space-x-2 rtl:space-x-reverse">
+                      <span className="text-sm font-semibold light:text-gray-900 text-white">
                         {m.sender}
                       </span>
-                      <span className="text-sm font-normal text-gray-500 dark:text-gray-400">
+                      {/* <span className="text-sm font-normal light:text-gray-500 text-gray-400">
                         11:46
-                      </span>
+                      </span> */}
                     </div>
-                    <p className="text-sm font-normal py-2.5 text-gray-900 dark:text-white">
+                    <p className="text-sm font-normal py-2.5 light:text-gray-900 text-white">
                       {m.text}
                     </p>
-                    <span className="text-sm font-normal text-gray-500 dark:text-gray-400">
+                    {/* <span className="text-sm font-normal light:text-gray-500 text-gray-400">
                       Delivered
-                    </span>
+                    </span> */}
                   </div>
                 </div>
               );
@@ -169,21 +169,21 @@ export default function App() {
             return (
               <>
                 <div className="flex items-start gap-2.5 mb-2" key={m.text + m.sender}>
-                  <div className="flex flex-col max-w-[320px] leading-1.5 p-4 border-gray-200 bg-gray-100 rounded-e-xl rounded-es-xl dark:bg-gray-700">
+                  <div className="flex flex-col max-w-[320px] leading-1.5 pt-3 pb-2 px-5 border-gray-200 light:bg-gray-100 rounded-e-xl rounded-es-xl bg-gray-700">
                     <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                      <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                      <span className="text-sm font-semibold light:text-gray-900 text-white">
                         {m.sender}
                       </span>
-                      <span className="text-sm font-normal text-gray-500 dark:text-gray-400">
+                      {/* <span className="text-sm font-normal light:text-gray-500 text-gray-400">
                         11:46
-                      </span>
+                      </span> */}
                     </div>
-                    <p className="text-sm font-normal py-2.5 text-gray-900 dark:text-white">
+                    <p className="text-sm font-normal py-2.5 light:text-gray-900 text-white">
                       {m.text}
                     </p>
-                    <span className="text-sm font-normal text-gray-500 dark:text-gray-400">
+                    {/* <span className="text-sm font-normal light:text-gray-500 text-gray-400">
                       Delivered
-                    </span>
+                    </span> */}
                   </div>
                 </div>
               </>
