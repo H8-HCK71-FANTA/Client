@@ -1,18 +1,8 @@
 import { useState, useEffect } from "react";
 import "./App.css";
-import SingleCard from "./components/SingleCard";
-
-// import { useEffect, useState } from "react";
 import { useSocket } from "./hooks/useSocket";
-
-// const cardImages = [
-//   { src: "/img/helmet-1.png", matched: false },
-//   { src: "/img/potion-1.png", matched: false },
-//   { src: "/img/ring-1.png", matched: false },
-//   { src: "/img/scroll-1.png", matched: false },
-//   { src: "/img/shield-1.png", matched: false },
-//   { src: "/img/sword-1.png", matched: false },
-// ];
+import { Button, Label, TextInput } from "flowbite-react";
+import SingleCard from "./components/SingleCard";
 
 export default function App() {
   const [cards, setCards] = useState([]);
@@ -20,26 +10,19 @@ export default function App() {
   const [choiceOne, setChoiceOne] = useState(null);
   const [choiceTwo, setChoiceTwo] = useState(null);
   const [disabled, setDisabled] = useState(false);
-  const [sendCard, setSendCard] = useState([])
-  // shuffle cards
-  // const shuffleCards = () => {
-  //   const shuffledCards = [...cardImages, ...cardImages]
-  //     .sort(() => Math.random() - 0.5)
-  //     .map((card) => ({ ...card, id: Math.random() }));
+  const [userName, setUserName] = useState("");
+  const [isUserSet, setIsUserSet] = useState(false);
+  const [players, setPlayers] = useState([]);
+  const [messages, setMessages] = useState([]);
+  const [sen, setSen] = useState("");
 
-  //   setChoiceOne(null);
-  //   setChoiceTwo(null);
-  //   setCards(shuffledCards);
-  //   setTurns(0);
-  // };
+  const socket = useSocket();
 
-  // handle a choice
   const handleChoice = (card) => {
+    if (disabled || card === choiceOne || card === choiceTwo) return;
     choiceOne ? setChoiceTwo(card) : setChoiceOne(card);
   };
 
-
-  // compare 2 selected cards
   useEffect(() => {
     if (choiceOne && choiceTwo) {
       setDisabled(true);
@@ -65,21 +48,17 @@ export default function App() {
   useEffect(() => {
     let count = 0;
 
-        cards.forEach((card) => {
-          console.log(card.matched, "truee");
-          if (card.matched === true) {
-            count++;
-          }
-        });
+    cards.forEach((card) => {
+      if (card.matched === true) {
+        count++;
+      }
+    });
 
-        console.log(count, "<<<< count");
+    if (cards.length === count) {
+      alert("Success! You matched all the cards.");
+    }
+  }, [cards]);
 
-        if (cards.length === count) {
-          alert("success nice");
-        }
-  }, []);
-
-  //reset choices & increase turn
   const resetTurn = () => {
     setChoiceOne(null);
     setChoiceTwo(null);
@@ -87,86 +66,119 @@ export default function App() {
     setDisabled(false);
   };
 
-  // start a new game
-  // useEffect(() => {
-  //   shuffleCards();
-  // }, []);
-
-
-
-  //socket ni boss
-  const socket = useSocket();
-  const [messages, setMessages] = useState([]);
-  const [sen, setSen] = useState("");
-
   useEffect(() => {
-    // 4. message nya di terima di kedua client
-    // optional chaining
     socket?.on("messages", (data) => {
       setMessages(data);
     });
 
-    socket?.emit("Join-Room", "room_1")
-
-    socket?.on("game-board-created", cards => {
-      console.log({cards});
-      setCards(cards)
+    socket?.on("game-board-created", (cards) => {
+      console.log(cards, "masuk harusnya");
+      setCards(cards);
       setTurns(0);
       setChoiceOne(null);
       setChoiceTwo(null);
-    })
+    });
+
+    socket?.on("user-joined", (userName, players) => {
+      console.log(`${userName} bergabung kedalam room.`);
+      setPlayers(players);
+    });
+
+    socket?.on("user-left", (userName, players) => {
+      console.log(`${userName} meninggalkan room.`);
+      setPlayers(players);
+    });
   }, [socket]);
 
-  // FLOW SOCKET.IO
-  // 1. kita kirim pesan dari client ke server
-  let tanganiKirimPesan = () => {
+  useEffect(() => {
+    // console.log("cek socket", socket);
+    if (isUserSet) {
+      socket?.emit("Join-Room", "room_1");
+    }
+  }, [isUserSet, socket]);
+
+  const handleFormSubmit = (e) => {
+    e.preventDefault();
+    localStorage.setItem("user", userName);
+    setIsUserSet(true);
+    socket?.emit("Set-Nick", userName);
+  };
+
+  const handleSendMessage = () => {
     const body = {
       sender: localStorage.getItem("user"),
       text: sen,
     };
 
     socket.emit("messages:post", body);
-
     setSen("");
   };
 
-  let handleSendCards = () => {
-    const body = {
-      sender: localStorage.getItem("user"),
-      data: cards
-    }
+  const startGame = () => {
+    console.log("Start Game clicked");
+    socket.emit("generate-shuffled-card", "room_1");
+  };
 
-    socket.emit("cards:post", body);
-    setSendCard([]);
-  }
-
-  const start = () => {
-    socket.emit("generate-shuffled-card")
-  }
   return (
     <>
       <div className="App" style={{ display: "flex" }}>
         <div className="card-container me-20">
           <h1>Card Game</h1>
-          {/* <button onClick={shuffleCards}>Start Game</button> */}
-          <button onClick={start}>Start Game</button>
+          {!isUserSet ? (
+            <form
+              className="flex max-w-md flex-col gap-4"
+              onSubmit={handleFormSubmit}
+            >
+              <div>
+                <div className="mb-2 block">
+                  <Label htmlFor="name" value="Your name" />
+                </div>
+                <TextInput
+                  id="name"
+                  type="text"
+                  placeholder=""
+                  value={userName}
+                  onChange={(e) => setUserName(e.target.value)}
+                  required
+                />
+              </div>
+              <Button type="submit">Submit</Button>
+            </form>
+          ) : (
+            <>
+              <button onClick={startGame} disabled={disabled}>
+                Start Game
+              </button>
 
-          <div className="card-grid" onClick={handleSendCards}>
-            {cards.map((card) => (
-              <SingleCard
-                key={card.id}
-                card={card}
-                handleChoice={handleChoice}
-                flipped={card === choiceOne || card === choiceTwo || card.matched}
-                disabled={disabled}
-              />
-            ))}
-          </div>
-          <p>Turns: {turns}</p>
+              <div className="card-grid">
+                {cards.map((card) => (
+                  <SingleCard
+                    key={card.id}
+                    card={card}
+                    handleChoice={handleChoice}
+                    flipped={
+                      card === choiceOne || card === choiceTwo || card.matched
+                    }
+                    disabled={disabled}
+                  />
+                ))}
+              </div>
+              <div>
+                <h2>Room: room_1</h2>
+                <h2>Players:</h2>
+                <ul>
+                  {players.map((player) => (
+                    <li key={player.id}>{player.name}</li>
+                  ))}
+                </ul>
+              </div>
+              <br />
+              <p>Turns: {turns}</p>
+            </>
+          )}
         </div>
 
         <div className="chat-container">
-          {/* socket */}
           <div>
             <h1>Hello</h1>
             {messages.map((m) => {
@@ -197,7 +209,7 @@ export default function App() {
                 setSen(e.target.value);
               }}
             />
-            <button onClick={tanganiKirimPesan}>Kirim</button>
+            <button onClick={handleSendMessage}>Send</button>
           </div>
         </div>
       </div>
