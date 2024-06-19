@@ -5,14 +5,14 @@ import SingleCard from "./components/SingleCard";
 // import { useEffect, useState } from "react";
 import { useSocket } from "./hooks/useSocket";
 
-const cardImages = [
-  { src: "/img/helmet-1.png", matched: false },
-  { src: "/img/potion-1.png", matched: false },
-  { src: "/img/ring-1.png", matched: false },
-  { src: "/img/scroll-1.png", matched: false },
-  { src: "/img/shield-1.png", matched: false },
-  { src: "/img/sword-1.png", matched: false },
-];
+// const cardImages = [
+//   { src: "/img/helmet-1.png", matched: false },
+//   { src: "/img/potion-1.png", matched: false },
+//   { src: "/img/ring-1.png", matched: false },
+//   { src: "/img/scroll-1.png", matched: false },
+//   { src: "/img/shield-1.png", matched: false },
+//   { src: "/img/sword-1.png", matched: false },
+// ];
 
 export default function App() {
   const [cards, setCards] = useState([]);
@@ -20,23 +20,24 @@ export default function App() {
   const [choiceOne, setChoiceOne] = useState(null);
   const [choiceTwo, setChoiceTwo] = useState(null);
   const [disabled, setDisabled] = useState(false);
-
+  const [sendCard, setSendCard] = useState([])
   // shuffle cards
-  const shuffleCards = () => {
-    const shuffledCards = [...cardImages, ...cardImages]
-      .sort(() => Math.random() - 0.5)
-      .map((card) => ({ ...card, id: Math.random() }));
+  // const shuffleCards = () => {
+  //   const shuffledCards = [...cardImages, ...cardImages]
+  //     .sort(() => Math.random() - 0.5)
+  //     .map((card) => ({ ...card, id: Math.random() }));
 
-    setChoiceOne(null);
-    setChoiceTwo(null);
-    setCards(shuffledCards);
-    setTurns(0);
-  };
+  //   setChoiceOne(null);
+  //   setChoiceTwo(null);
+  //   setCards(shuffledCards);
+  //   setTurns(0);
+  // };
 
   // handle a choice
   const handleChoice = (card) => {
     choiceOne ? setChoiceTwo(card) : setChoiceOne(card);
   };
+
 
   // compare 2 selected cards
   useEffect(() => {
@@ -54,12 +55,15 @@ export default function App() {
           });
         });
 
-        console.log(cards);
-        // console.log(cards[0].matched, "halllooo");
-        // if ()
-        console.log(disabled, "<<<<");
+        resetTurn();
+      } else {
+        setTimeout(() => resetTurn(), 1000);
+      }
+    }
+  }, [choiceOne, choiceTwo]);
 
-        let count = 2;
+  useEffect(() => {
+    let count = 0;
 
         cards.forEach((card) => {
           console.log(card.matched, "truee");
@@ -73,12 +77,8 @@ export default function App() {
         if (cards.length === count) {
           alert("success nice");
         }
-        resetTurn();
-      } else {
-        setTimeout(() => resetTurn(), 1000);
-      }
-    }
-  }, [choiceOne, choiceTwo]);
+  }, []);
+
   //reset choices & increase turn
   const resetTurn = () => {
     setChoiceOne(null);
@@ -88,9 +88,11 @@ export default function App() {
   };
 
   // start a new game
-  useEffect(() => {
-    shuffleCards();
-  }, []);
+  // useEffect(() => {
+  //   shuffleCards();
+  // }, []);
+
+
 
   //socket ni boss
   const socket = useSocket();
@@ -103,6 +105,16 @@ export default function App() {
     socket?.on("messages", (data) => {
       setMessages(data);
     });
+
+    socket?.emit("Join-Room", "room_1")
+
+    socket?.on("game-board-created", cards => {
+      console.log({cards});
+      setCards(cards)
+      setTurns(0);
+      setChoiceOne(null);
+      setChoiceTwo(null);
+    })
   }, [socket]);
 
   // FLOW SOCKET.IO
@@ -118,58 +130,76 @@ export default function App() {
     setSen("");
   };
 
+  let handleSendCards = () => {
+    const body = {
+      sender: localStorage.getItem("user"),
+      data: cards
+    }
+
+    socket.emit("cards:post", body);
+    setSendCard([]);
+  }
+
+  const start = () => {
+    socket.emit("generate-shuffled-card")
+  }
   return (
     <>
-      <div className="App">
-        <h1>Card Game</h1>
-        <button onClick={shuffleCards}>Start Game</button>
+      <div className="App" style={{ display: "flex" }}>
+        <div className="card-container me-20">
+          <h1>Card Game</h1>
+          {/* <button onClick={shuffleCards}>Start Game</button> */}
+          <button onClick={start}>Start Game</button>
 
-        <div className="card-grid">
-          {cards.map((card) => (
-            <SingleCard
-              key={card.id}
-              card={card}
-              handleChoice={handleChoice}
-              flipped={card === choiceOne || card === choiceTwo || card.matched}
-              disabled={disabled}
-            />
-          ))}
+          <div className="card-grid" onClick={handleSendCards}>
+            {cards.map((card) => (
+              <SingleCard
+                key={card.id}
+                card={card}
+                handleChoice={handleChoice}
+                flipped={card === choiceOne || card === choiceTwo || card.matched}
+                disabled={disabled}
+              />
+            ))}
+          </div>
+          <p>Turns: {turns}</p>
         </div>
-        <p>Turns: {turns}</p>
-      </div>
 
-      {/* socket */}
-      <div>
-        <h1>Hello</h1>
-        {messages.map((m) => {
-          if (m.sender === localStorage.getItem("user")) {
-            return (
-              <div
-                key={m.text + m.sender}
-                className="d-flex justify-content-end"
-              >
-                <p>
-                  {m.text}:<strong>{m.sender}</strong>
-                </p>
-              </div>
-            );
-          }
-          return (
-            <div key={m.text + m.sender}>
-              <p>
-                <strong>{m.sender}</strong>: {m.text}
-              </p>
-            </div>
-          );
-        })}
-        <hr />
-        <input
-          value={sen}
-          onChange={(e) => {
-            setSen(e.target.value);
-          }}
-        />
-        <button onClick={tanganiKirimPesan}>Kirim</button>
+        <div className="chat-container">
+          {/* socket */}
+          <div>
+            <h1>Hello</h1>
+            {messages.map((m) => {
+              if (m.sender === localStorage.getItem("user")) {
+                return (
+                  <div
+                    key={m.text + m.sender}
+                    className="d-flex justify-content-end"
+                  >
+                    <p>
+                      {m.text}:<strong>{m.sender}</strong>
+                    </p>
+                  </div>
+                );
+              }
+              return (
+                <div key={m.text + m.sender}>
+                  <p>
+                    <strong>{m.sender}</strong>: {m.text}
+                  </p>
+                </div>
+              );
+            })}
+            <hr />
+            <input
+              value={sen}
+              onChange={(e) => {
+                setSen(e.target.value);
+              }}
+            />
+            <button onClick={tanganiKirimPesan}>Kirim</button>
+          </div>
+        </div>
       </div>
     </>
   );
