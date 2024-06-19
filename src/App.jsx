@@ -2,6 +2,9 @@ import { useState, useEffect } from "react";
 import "./App.css";
 import SingleCard from "./components/SingleCard";
 
+// import { useEffect, useState } from "react";
+import { useSocket } from "./hooks/useSocket";
+
 const cardImages = [
   { src: "/img/helmet-1.png", matched: false },
   { src: "/img/potion-1.png", matched: false },
@@ -50,15 +53,32 @@ export default function App() {
             }
           });
         });
+
+        console.log(cards);
+        // console.log(cards[0].matched, "halllooo");
+        // if ()
+        console.log(disabled, "<<<<");
+
+        let count = 2;
+
+        cards.forEach((card) => {
+          console.log(card.matched, "truee");
+          if (card.matched === true) {
+            count++;
+          }
+        });
+
+        console.log(count, "<<<< count");
+
+        if (cards.length === count) {
+          alert("success nice");
+        }
         resetTurn();
       } else {
         setTimeout(() => resetTurn(), 1000);
       }
     }
   }, [choiceOne, choiceTwo]);
-
-  console.log(cards);
-
   //reset choices & increase turn
   const resetTurn = () => {
     setChoiceOne(null);
@@ -71,6 +91,32 @@ export default function App() {
   useEffect(() => {
     shuffleCards();
   }, []);
+
+  //socket ni boss
+  const socket = useSocket();
+  const [messages, setMessages] = useState([]);
+  const [sen, setSen] = useState("");
+
+  useEffect(() => {
+    // 4. message nya di terima di kedua client
+    // optional chaining
+    socket?.on("messages", (data) => {
+      setMessages(data);
+    });
+  }, [socket]);
+
+  // FLOW SOCKET.IO
+  // 1. kita kirim pesan dari client ke server
+  let tanganiKirimPesan = () => {
+    const body = {
+      sender: localStorage.getItem("user"),
+      text: sen,
+    };
+
+    socket.emit("messages:post", body);
+
+    setSen("");
+  };
 
   return (
     <>
@@ -90,6 +136,40 @@ export default function App() {
           ))}
         </div>
         <p>Turns: {turns}</p>
+      </div>
+
+      {/* socket */}
+      <div>
+        <h1>Hello</h1>
+        {messages.map((m) => {
+          if (m.sender === localStorage.getItem("user")) {
+            return (
+              <div
+                key={m.text + m.sender}
+                className="d-flex justify-content-end"
+              >
+                <p>
+                  {m.text}:<strong>{m.sender}</strong>
+                </p>
+              </div>
+            );
+          }
+          return (
+            <div key={m.text + m.sender}>
+              <p>
+                <strong>{m.sender}</strong>: {m.text}
+              </p>
+            </div>
+          );
+        })}
+        <hr />
+        <input
+          value={sen}
+          onChange={(e) => {
+            setSen(e.target.value);
+          }}
+        />
+        <button onClick={tanganiKirimPesan}>Kirim</button>
       </div>
     </>
   );
