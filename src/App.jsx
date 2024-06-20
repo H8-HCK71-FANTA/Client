@@ -1,9 +1,11 @@
 import "./App.css";
+
 import SingleCard from "./components/SingleCard";
 import { useState, useEffect, useContext } from "react";
 import { Button, Label, TextInput } from "flowbite-react";
 import { ThemeContext } from "./contexts/ThemeContext";
 import { useSocket } from "./hooks/useSocket";
+
 
 export default function App() {
   const [cards, setCards] = useState([]);
@@ -12,11 +14,15 @@ export default function App() {
   const [choiceTwo, setChoiceTwo] = useState(null);
   const [disabled, setDisabled] = useState(false);
 
+  const [userName, setUserName] = useState("");
+  const [isUserSet, setIsUserSet] = useState(false);
+  const [players, setPlayers] = useState([]);
+  const [messages, setMessages] = useState([]);
+  const [sen, setSen] = useState("");
+  const [currentRoom, setCurrentRoom] = useState("");
+  const [currentPlayer, setCurrentPlayer] = useState(null);
+
   const { theme, currentTheme, changeTheme } = useContext(ThemeContext);
-
-  console.log(currentTheme, "<<< ini currentTheme")
-  console.log(useContext(ThemeContext), "<<< ini ThemeContext")
-
 
   // handle a choice
   const handleChoice = (card) => {
@@ -24,41 +30,38 @@ export default function App() {
   };
   
 
+  const socket = useSocket();
 
-  // compare 2 selected cards
-  useEffect(() => {
-    if (choiceOne && choiceTwo) {
-      setDisabled(true);
-
-      if (choiceOne.src === choiceTwo.src) {
-        setCards((prevCards) => {
-          return prevCards.map((card) => {
-            if (card.src === choiceOne.src) {
-              return { ...card, matched: true };
-            } else {
-              return card;
-            }
-          });
-        });
-
-        resetTurn();
-      } else {
-        setTimeout(() => resetTurn(), 1000);
-      }
-    }
-  }, [choiceOne, choiceTwo]);
+  const handleChoice = (card) => {
+    if (disabled || card.flipped || card.matched || currentPlayer !== socket.id)
+      return;
+    socket.emit("flip-card", card.id);
+  };
 
   useEffect(() => {
+    socket?.on("messages", (data) => {
+      setMessages(data);
+      scrollToBottom();
+    });
+
+    socket?.on("game-board-created", (cards) => {
+      setCards(cards);
+      setTurns(0);
+      setChoiceOne(null);
+      setChoiceTwo(null);
+    });
+
+    socket?.on("user-joined", (userName, players) => {
+      setPlayers(players);
+    });
+
     let count = 0;
 
     cards.forEach((card) => {
-      console.log(card.matched, "truee");
       if (card.matched === true) {
         count++;
       }
     });
-
-    console.log(count, "<<<< count");
 
     if (cards.length === count) {
       // alert("success nice");
@@ -66,29 +69,67 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  //reset choices & increase turn
-  const resetTurn = () => {
-    setChoiceOne(null);
-    setChoiceTwo(null);
-    setTurns((prevTurns) => prevTurns + 1);
-    setDisabled(false);
-  };
-
-
-  //socket ni boss
-  const socket = useSocket();
-  const [messages, setMessages] = useState([]);
-  const [sen, setSen] = useState("");
-
-  useEffect(() => {
-    // 4. message nya di terima di kedua client
-    // optional chaining
-    socket?.on("messages", (data) => {
-      setMessages(data);
+    socket?.on("user-left", (userName, players) => {
+      setPlayers(players);
     });
 
-    socket?.emit("Join-Room", "room_1")
+    socket?.on("message", (message) => {
+      setMessages((prevMessages) => [...prevMessages, message]);
+      scrollToBottom();
+    });
 
+    socket?.on("card-flipped", (card) => {
+      setCards((prevCards) =>
+        prevCards.map((c) => (c.id === card.id ? card : c))
+      );
+      if (!choiceOne) {
+        setChoiceOne(card);
+      } else {
+        setChoiceTwo(card);
+      }
+    });
+
+    socket?.on("cards-matched", (cards) => {
+      setCards((prevCards) =>
+        prevCards.map((card) =>
+          cards.find((c) => c.id === card.id)
+            ? { ...card, matched: true }
+            : card
+        )
+      );
+      resetTurn();
+    });
+
+    socket?.on("cards-unmatched", (cards) => {
+      setTimeout(() => {
+        setCards((prevCards) =>
+          prevCards.map((card) =>
+            cards.find((c) => c.id === card.id)
+              ? { ...card, flipped: false }
+              : card
+          )
+        );
+        resetTurn();
+      }, 1000);
+    });
+
+    socket?.on("update-turn", (playerId) => {
+      setCurrentPlayer(playerId);
+    });
+  }, [socket]);
+
+  useEffect(() => {
+    if (isUserSet && currentRoom) {
+      socket?.emit("Join-Room", currentRoom);
+    }
+  }, [isUserSet, currentRoom, socket]);
+
+  const handleFormSubmit = (event) => {
+    event.preventDefault();
+    localStorage.setItem("user", userName);
+    setIsUserSet(true);
+    socket?.emit("Set-Nick", userName);
+  };
     socket?.on("game-board-created", cards => {
       console.log({ cards });
       setCards(cards)
@@ -98,26 +139,39 @@ export default function App() {
     })
   }, [socket]);
 
-  // FLOW SOCKET.IO
-  // 1. kita kirim pesan dari client ke server
-  let tanganiKirimPesan = () => {
+  const handleSendMessage = () => {
+    if (!sen.trim()) return;
     const body = {
       sender: localStorage.getItem("user"),
       text: sen,
     };
 
     socket.emit("messages:post", body);
-
     setSen("");
   };
 
-  const start = () => {
-    socket.emit("generate-shuffled-card")
-  }
+  const startGame = () => {
+    socket.emit("generate-shuffled-card", currentRoom);
+  };
 
-  // console.log(switch1, "<<<< ini dari toggle")
+  const handleRoomChange = (room) => {
+    setCurrentRoom(room);
+    setMessages([]);
+  };
 
-  console.log(theme[currentTheme], "<<-----");
+  const scrollToBottom = () => {
+    const chatContainer = document.querySelector(".chat-container");
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+  };
+
+  const resetTurn = () => {
+    setChoiceOne(null);
+    setChoiceTwo(null);
+    setTurns((prevTurns) => prevTurns + 1);
+    setDisabled(false);
+  };
+
+
   return (
     <>
         <div className={`App flex w-full h-full px-20 py-5 ${theme[currentTheme].bgColor}`}>
@@ -127,17 +181,31 @@ export default function App() {
             </button>
 
             <h3 className={`text-2xl font-semibold ${theme[currentTheme].colorTextPrimary}`}>Memory Battle</h3>
-            <form className="flex max-w-md flex-col gap-4">
+            {!isUserSet ? (
+            <form className="flex max-w-md flex-col gap-4"
+             onSubmit={handleFormSubmit}>
               <div>
                 <div className="mb-2 block">
                   <Label htmlFor="name" value="Your name" />
                 </div>
-                <TextInput id="name" type="text" placeholder="" required />
+                <TextInput id="name" type="text" placeholder="your name" value={userName}
+                  onChange={(event) => setUserName(event.target.value)}
+                  required />
               </div>
               <Button type="submit">Submit</Button>
             </form>
-
-            <button onClick={start}>Start Game</button>
+            ) : (
+            <>
+            <div className="room-selection">
+                <button onClick={() => handleRoomChange("room_1")}>
+                  Room 1
+                </button>
+                <button onClick={() => handleRoomChange("room_2")}>
+                  Room 2
+                </button>
+              </div>
+              
+            <button onClick={startGame}>Start Game</button>
 
             <div className="card-grid">
               {cards.map((card) => (
@@ -145,14 +213,29 @@ export default function App() {
                   key={card.id}
                   card={card}
                   handleChoice={handleChoice}
-                  flipped={card === choiceOne || card === choiceTwo || card.matched}
+                  flipped={card.flipped || card.matched}
                   disabled={disabled}
                 />
               ))}
             </div>
+            <div>
+                <h2>Room: {currentRoom}</h2>
+                <h2>Players:</h2>
+                <ul>
+                  {players.map((player) => (
+                    <li key={player.id}>{player.name}</li>
+                  ))}
+                </ul>
+                <h3>
+                  Player Turn:{" "}
+                  {players.find((player) => player.id === currentPlayer)
+                    ?.name || "None"}
+                </h3>
+              </div>
+              <br />
             <p>Turns: {turns}</p>
           </div>
-
+          
           <div className="main-chat-container shadow-xl h-fit">
             <div className={`players-container ${theme[currentTheme].bgColorHeader} p-3 rounded-ss-xl rounded-se-xl flex gap-3`}>
               <div className={`box ${theme[currentTheme].bgColorPlayer} w-1/2 p-2 rounded-lg shadow-lg`}>
@@ -167,18 +250,18 @@ export default function App() {
             <div className={`chat-container flex-col max-h-[400px] ${theme[currentTheme].bgColorChat} overflow-auto`}>
               <div className="chat-view p-5 overflow-auto">
                 <p className={`${theme[currentTheme].colorTextSecondary} italic text-sm mb-5`}>your conversation starts here</p>
-                {messages.map((m) => {
-                  if (m.sender === localStorage.getItem("user")) {
+                {messages.map((message, index) => (
+                  if (message.sender === localStorage.getItem("user")) {
                     return (
-                      <div className="flex items-start gap-2.5 justify-end mb-2" key={m.text + m.sender}>
+                      <div className="flex items-start gap-2.5 justify-end mb-2" key={index}>
                         <div className={`flex flex-col max-w-[250px] leading-1.5 pt-3 pb-2 px-3 border-gray-200 rounded-s-xl rounded-ee-xl ${theme[currentTheme].bgColorBubChat1}`}>
                           <div className="flex items-end space-x-2 rtl:space-x-reverse">
                             <span className={`text-sm font-semibold ${theme[currentTheme].colorTextPrimary}`}>
-                              {m.sender}
+                              {message.sender}
                             </span>
                           </div>
                           <p className={`text-sm font-normal py-2.5 light:text-gray-900 ${theme[currentTheme].colorTextPrimary}`}>
-                            {m.text}
+                            {message.text}
                           </p>
                         </div>
                       </div>
@@ -210,12 +293,12 @@ export default function App() {
                   type="text"
                   placeholder="type here.."
                   value={sen}
-                  onChange={(e) => {
-                    setSen(e.target.value);
+                  onChange={(event) => {
+                  setSen(event.target.value);
                   }}
                   className="w-full"
                 />
-                <div onClick={tanganiKirimPesan} className="p-3 py-1 rounded-lg flex items-center cursor-pointer bg-pink-700 hover:bg-pink-800">
+                <div onClick={handleSendMessage} className="p-3 py-1 rounded-lg flex items-center cursor-pointer bg-pink-700 hover:bg-pink-800">
                   <i className='bx bxs-paper-plane text-base'></i>
                 </div>
               </form>
