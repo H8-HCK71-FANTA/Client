@@ -1,11 +1,9 @@
 import "./App.css";
-import { useState, useEffect, useContext } from "react";
 import SingleCard from "./components/SingleCard";
+import { useState, useEffect, useContext } from "react";
 import { Button, Label, TextInput } from "flowbite-react";
-// import { ToggleSwitch } from "flowbite-react";
-import { ThemeContext } from "./contexts/ThemeContecxt";
+import { ThemeContext } from "./contexts/ThemeContext";
 import { useSocket } from "./hooks/useSocket";
-import { ThemeProvider } from "./contexts/ThemeContecxt";
 
 export default function App() {
   const [cards, setCards] = useState([]);
@@ -13,14 +11,18 @@ export default function App() {
   const [choiceOne, setChoiceOne] = useState(null);
   const [choiceTwo, setChoiceTwo] = useState(null);
   const [disabled, setDisabled] = useState(false);
-  // const [switch1, setSwitch1] = useState(false);
 
   const { theme, currentTheme, changeTheme } = useContext(ThemeContext);
+
+  console.log(currentTheme, "<<< ini currentTheme")
+  console.log(useContext(ThemeContext), "<<< ini ThemeContext")
+
 
   // handle a choice
   const handleChoice = (card) => {
     choiceOne ? setChoiceTwo(card) : setChoiceOne(card);
   };
+  
 
 
   // compare 2 selected cards
@@ -115,10 +117,9 @@ export default function App() {
 
   // console.log(switch1, "<<<< ini dari toggle")
 
+  console.log(theme[currentTheme], "<<-----");
   return (
     <>
-      <ThemeProvider>
-
         <div className={`App flex w-full h-full px-20 py-5 ${theme[currentTheme].bgColor}`}>
           <div className="card-container w-3/4 me-10">
             <button className="cursor-pointer" onClick={changeTheme}>
@@ -154,13 +155,13 @@ export default function App() {
 
           <div className="main-chat-container shadow-xl h-fit">
             <div className={`players-container ${theme[currentTheme].bgColorHeader} p-3 rounded-ss-xl rounded-se-xl flex gap-3`}>
-              <div className="box bg-[#45425a] w-1/2 p-2 rounded-lg borde">
-                <p className="text-sm font-semibold">Player 1</p>
-                <p>0 point</p>
+              <div className={`box ${theme[currentTheme].bgColorPlayer} w-1/2 p-2 rounded-lg shadow-lg`}>
+                <p className={`text-sm font-semibold ${theme[currentTheme].colorTextPrimary}`}>Player 1</p>
+                <p className={`text-sm font-semibold ${theme[currentTheme].colorTextPrimary}`}>0 point</p>
               </div>
-              <div className="box bg-[#45425a] w-1/2 p-2 rounded-lg">
-                <p className="text-sm font-semibold">Player 2</p>
-                <p>0 point</p>
+              <div className={`box ${theme[currentTheme].bgColorPlayer} w-1/2 p-2 rounded-lg shadow-lg`}>
+                <p className={`text-sm font-semibold ${theme[currentTheme].colorTextPrimary}`}>Player 2</p>
+                <p className={`text-sm font-semibold ${theme[currentTheme].colorTextPrimary}`}>0 point</p>
               </div>
             </div>
             <div className={`chat-container flex-col max-h-[400px] ${theme[currentTheme].bgColorChat} overflow-auto`}>
@@ -221,7 +222,6 @@ export default function App() {
             </div>
           </div>
         </div >
-      </ThemeProvider>
     </>
   );
 }
