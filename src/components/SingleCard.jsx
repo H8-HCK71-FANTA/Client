@@ -19,7 +19,7 @@ export default function SingleCard({
         <img className="front" src={card.src} alt="card front" />
         <img
           className="back"
-          src="/img/cover.png"
+          src="/img/background.jpg"
           onClick={handleClick}
           alt="card back"
         />
