@@ -116,8 +116,6 @@ export default function App() {
   }
 
   // console.log(switch1, "<<<< ini dari toggle")
-
-  console.log(theme[currentTheme], "<<-----");
   return (
     <>
         <div className={`App flex w-full h-full px-20 py-5 ${theme[currentTheme].bgColor}`}>
