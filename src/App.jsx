@@ -1,4 +1,5 @@
 import "./App.css";
+
 import SingleCard from "./components/SingleCard";
 import { useState, useEffect, useContext } from "react";
 import { TextInput } from "flowbite-react";
@@ -21,6 +22,7 @@ export default function App() {
   const [sen, setSen] = useState("");
   const [currentRoom, setCurrentRoom] = useState("");
   const [currentPlayer, setCurrentPlayer] = useState(null);
+
   const [gameStarted, setGameStarted] = useState(false);
 
   const { theme, currentTheme, changeTheme } = useContext(ThemeContext);
