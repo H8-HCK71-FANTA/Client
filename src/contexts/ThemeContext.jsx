@@ -13,7 +13,10 @@ export const ThemeContext = createContext({
             bgColorHeader: "bg-slate-300",
             bgColorPlayer: "bg-slate-200",
             bgColorBubChat1: "bg-blue-200",
-            bgColorBubChat2: "bg-gray-100"
+            bgColorBubChat2: "bg-gray-100",
+            bgColorCardRoom: "bg-white",
+            bgColorListPlayer: "bg-gray-50",
+            hoverListPlayer: "hover:bg-gray-100",
         },
         dark: {
             colorTextPrimary: "text-[#ffffffde]",
@@ -24,7 +27,10 @@ export const ThemeContext = createContext({
             bgColorHeader: "bg-[#3a384c]",
             bgColorPlayer: "bg-[#45425a]",
             bgColorBubChat1: "bg-pink-900",
-            bgColorBubChat2: "bg-gray-700"
+            bgColorBubChat2: "bg-gray-700",
+            bgColorCardRoom: "bg-gray-800",
+            bgColorListPlayer: "bg-gray-600",
+            hoverCardRoom: "hover:bg-gray-500",
         }
     },
     setCurrentTheme: () => { }
@@ -57,12 +63,16 @@ export function ThemeProvider(props) {
             theme: {
                 light: {
                     colorTextPrimary: "text-black",
-                    colorTextSecondary: "bg-gray-500",
+                    colorTextSecondary: "text-gray-500",
                     bgColor: "bg-slate-100",
                     bgColorChat: "bg-blue-100",
                     bgColorHeader: "bg-slate-300",
-                    bgColorBubChat1: "bg-blue-300",
-                    bgColorBubChat2: "bg-gray-300"
+                    bgColorPlayer: "bg-slate-200",
+                    bgColorBubChat1: "bg-blue-200",
+                    bgColorBubChat2: "bg-gray-100",
+                    bgColorCardRoom: "bg-white",
+                    bgColorListPlayer: "bg-gray-50",
+                    hoverListPlayer: "hover:bg-gray-100",
                 },
                 dark: {
                     colorTextPrimary: "text-[#ffffffde]",
@@ -73,7 +83,10 @@ export function ThemeProvider(props) {
                     bgColorHeader: "bg-[#3a384c]",
                     bgColorPlayer: "bg-[#45425a]",
                     bgColorBubChat1: "bg-pink-900",
-                    bgColorBubChat2: "bg-gray-700"
+                    bgColorBubChat2: "bg-gray-700",
+                    bgColorCardRoom: "bg-gray-800",
+                    bgColorListPlayer: "bg-gray-600",
+                    hoverCardRoom: "hover:bg-gray-500",
                 }
             },
             changeTheme: changeTheme
